@@ -51,15 +51,94 @@ final class ArticleProtectionHooks {
 
 		$dbw = wfGetDB( DB_MASTER );
 		$dbw->insert(
-			'aritcle_protection',
+			'article_protection',
 			array(
-				'article_id' => $article->getPage()->getID(),
-				'article_creator_id' => $user->getId(),
-				'article_editors' => '',
-				'article_viewers' => ''
+				'article_id' => $article->getID(),
+				'user_name' => $user->getName(),
+				'owner' => 1,
+				'edit_permission' => 1,
+				'view_permission' => 1,
 			)
 		);
 		return true;
 	}
 
+	public static function onSkinTemplateNavigation( SkinTemplate &$sktemplate, array &$links ) {
+		$request = $sktemplate->getRequest();
+		$action = $request->getText( 'action' );
+		$links['views']['protection'] = array(
+			'class' => false,
+			'text' => "Protection",
+			'href' => $sktemplate->makeArticleUrlDetails(
+				Title::newFromText('Special:ArticleProtection')->getFullText() )['href']
+		);
+		return true;
+	}
+
+	public static function onTitleQuickPermissions( $title, $user, $action, &$errors, $doExpensiveQueries, $short ) {
+
+		// if ($action == 'edit') {
+
+			// $dbr = wfGetDB( DB_SLAVE );
+
+			// $article_info = $dbr->selectRow(
+				// 'article_protection',
+				// array(
+					// 'owner',
+					// 'edit_permission',
+					// 'view_permission'
+				// ),
+				// array(
+					// 'user_name' => $user->getName(),
+					// 'article_id' => $title->getArticleID()
+				// )
+			// );
+
+			// if (!$article_info) {
+				// return true;
+			// }
+
+			// if ($article_info->edit_permission != "1" ) {
+				// $errors = array( array( "not allowed" ) );
+				// return false;
+			// }
+		// }
+		return true;
+	}
+
+	public static function onUserGetRights( $user, &$aRights ) {
+		global $wgTitle;
+		$aRights = array_merge( array_diff($aRights, array("read", "edit")) );
+		$dbr = wfGetDB( DB_SLAVE );
+
+		$article_info = $dbr->selectRow(
+			'article_protection',
+			array(
+				'owner',
+				'edit_permission',
+				'view_permission'
+			),
+			array(
+				'user_name' => $user->getName(),
+				'article_id' => $wgTitle->getArticleID()
+			)
+		);
+
+		if ( !$article_info ) {
+			$aRights[] = "edit";
+			$aRights[] = "read";
+			return true;
+		}
+
+		if ($article_info->owner == "1" || $article_info->edit_permission == "1" ) {
+			$aRights[] = "edit";
+			$aRights[] = "read";
+			return true;
+		}
+		if ( $article_info->view_permission == "1" ) {
+			$aRights[] = "read";
+			return true;
+		}
+		return true;
+	}
 }
