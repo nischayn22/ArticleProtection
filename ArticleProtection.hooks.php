@@ -66,11 +66,11 @@ final class ArticleProtectionHooks {
 	public static function onSkinTemplateNavigation( SkinTemplate &$sktemplate, array &$links ) {
 		$request = $sktemplate->getRequest();
 		$action = $request->getText( 'action' );
+		$article_details = $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection')->getFullText() );
 		$links['views']['protection'] = array(
 			'class' => false,
 			'text' => "Protection",
-			'href' => $sktemplate->makeArticleUrlDetails(
-				Title::newFromText('Special:ArticleProtection')->getFullText() )['href']
+			'href' => $article_details['href']
 		);
 		return true;
 	}
