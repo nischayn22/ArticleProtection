@@ -7,12 +7,10 @@ class ApiArticleProtection extends ApiBase {
 
         $article_id = $this->getMain()->getVal('article_id');
         $edit_permissions = $this->getMain()->getVal('edit_permissions');
-        $view_permissions = $this->getMain()->getVal('view_permissions');
 
 		$dbw = wfGetDB( DB_MASTER );
 
 		$article_editors = explode(",", $edit_permissions);
-		$article_viewers = explode(",", $view_permissions);
 
 		$dbw->begin();
 		foreach($article_viewers as $viewer) {
@@ -28,8 +26,7 @@ class ApiArticleProtection extends ApiBase {
 					'article_id' => $article_id,
 					'user_name' => trim($viewer),
 					'owner' => 0,
-					'edit_permission' => 0,
-					'view_permission' => 1
+					'edit_permission' => 0
 				)
 			);
 		}
@@ -49,7 +46,6 @@ class ApiArticleProtection extends ApiBase {
 					'user_name' => trim($editor),
 					'owner' => 0,
 					'edit_permission' => 1,
-					'view_permission' => 1,
 				)
 			);
 		}
@@ -67,10 +63,6 @@ class ApiArticleProtection extends ApiBase {
                 ApiBase::PARAM_REQUIRED => true
             ),
             'edit_permissions' => array (
-                ApiBase::PARAM_TYPE => 'string',
-                ApiBase::PARAM_REQUIRED => true
-            ),
-            'view_permissions' => array (
                 ApiBase::PARAM_TYPE => 'string',
                 ApiBase::PARAM_REQUIRED => true
             ),

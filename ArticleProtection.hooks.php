@@ -57,16 +57,16 @@ final class ArticleProtectionHooks {
 				'user_name' => $user->getName(),
 				'owner' => 1,
 				'edit_permission' => 1,
-				'view_permission' => 1,
 			)
 		);
 		return true;
 	}
 
 	public static function onSkinTemplateNavigation( SkinTemplate &$sktemplate, array &$links ) {
+		global $wgTitle;
 		$request = $sktemplate->getRequest();
 		$action = $request->getText( 'action' );
-		$article_details = $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection')->getFullText() );
+		$article_details = $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/' . $wgTitle->getText() )->getFullText() );
 		$links['views']['protection'] = array(
 			'class' => false,
 			'text' => "Protection",
@@ -108,15 +108,14 @@ final class ArticleProtectionHooks {
 
 	public static function onUserGetRights( $user, &$aRights ) {
 		global $wgTitle;
-		$aRights = array_merge( array_diff($aRights, array("read", "edit")) );
+		$aRights = array_merge( array_diff($aRights, array("edit")) );
 		$dbr = wfGetDB( DB_SLAVE );
 
 		$article_info = $dbr->selectRow(
 			'article_protection',
 			array(
 				'owner',
-				'edit_permission',
-				'view_permission'
+				'edit_permission'
 			),
 			array(
 				'user_name' => $user->getName(),
@@ -126,19 +125,14 @@ final class ArticleProtectionHooks {
 
 		if ( !$article_info ) {
 			$aRights[] = "edit";
-			$aRights[] = "read";
 			return true;
 		}
 
 		if ($article_info->owner == "1" || $article_info->edit_permission == "1" ) {
 			$aRights[] = "edit";
-			$aRights[] = "read";
 			return true;
 		}
-		if ( $article_info->view_permission == "1" ) {
-			$aRights[] = "read";
-			return true;
-		}
+
 		return true;
 	}
 }

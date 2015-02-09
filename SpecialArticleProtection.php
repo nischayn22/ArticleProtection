@@ -61,17 +61,21 @@ class SpecialArticleProtection extends SpecialPage {
 		}
 
 		if ( empty( $subPage ) ) {
-			$this->showForms();
+			$this->showFormLinks();
 			return;
 		}
 
-		$this->showUserPages($subPage);
+		if (strpos( $subPage, 'User' ) !== false) {
+			$this->showUserPages( substr( $subPage, 5 ) );
+			return;
+		}
+		$this->showArticlePermissions($subPage);
 	}
 
-	public function showForms() {
+	public function showFormLinks() {
 		global $wgOut, $wgUser, $wgScriptPath;
 
-		$wgOut->addHTML( '<h3>Enter usernames seperated by commas.</h3>' );
+//		$wgOut->addHTML( '<h3>Enter usernames seperated by commas.</h3>' );
 
 		$dbr = wfGetDB( DB_SLAVE );
 
@@ -86,6 +90,41 @@ class SpecialArticleProtection extends SpecialPage {
 			)
 		);
 
+		$htmlOut = Html::openElement( 'table',
+			array(
+				'class' => 'wikitable',
+			)
+		);
+		$htmlOut .= Html::openElement( 'tbody' );
+
+		$htmlOut .= Html::openElement( 'tr' );
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"Article"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"Owners"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"Users with edit permissions"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"Edit Permission link"
+		);
+		$htmlOut .= Html::closeElement( 'tr' );
+		$wgOut->addHTML($htmlOut);
+
 		foreach ( $articles as $article ) {
 
 			$article_user_permissions = $dbr->select(
@@ -93,147 +132,69 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'article_id',
 					'user_name',
-					'edit_permission',
-					'view_permission'
+					'owner',
+					'edit_permission'
 				),
 				array(
-					'article_id' => $article->article_id,
-					'owner' => 0
+					'article_id' => $article->article_id
 				)
 			);
 
+			$article_owners = array();
 			$article_editors = array();
-			$article_viewers = array();
 
-			$title_name = Title::newFromID( $article->article_id )->getFullText();
+			$title = Title::newFromID( $article->article_id );
+			$title_name = $title->getFullText();
 			foreach( $article_user_permissions as $article_user_perm ) {
+				if ( $article_user_perm->owner == 1 ) {
+					$article_owners[] = $article_user_perm->user_name;
+					continue;
+				}
 				if ( $article_user_perm->edit_permission == 1 ) {
 					$article_editors[] = $article_user_perm->user_name;
 					continue;
 				}
-				if ( $article_user_perm->view_permission == 1 ) {
-					$article_viewers[] = $article_user_perm->user_name;
-				}
 			}
 
+			$owner_permissions_usernames = implode(",", $article_owners);
 			$edit_permissions_usernames = implode(",", $article_editors);
-			$view_permissions_usernames = implode(",", $article_viewers);
 
-			$htmlOut = Html::openElement( 'form',
-				array(
-					'name' => 'article_protection',
-					'class' => 'article_protection_form',
-					'id' => 'article_protection_form' . $article->article_id,
-				)
-			);
-			$htmlOut .= Html::openElement( 'table',
-				array(
-					'class' => 'wikitable',
-				)
-			);
-			$htmlOut .= Html::openElement( 'tbody');
-
-			$htmlOut .= Html::openElement( 'tr');
-			$title_name = Title::newFromID( $article->article_id )->getFullText();
+			$htmlOut = Html::openElement( 'tr' );
 			$htmlOut .= Html::rawElement( 'td',
 				array(
-					'colspan' => '2',
+					'class' => 'article_protection_row',
 				),
-				"Permissions for article $title_name"
+				Linker::link($title)
 			);
-			$htmlOut .= Html::closeElement( 'tr');
 
-			$htmlOut .= Html::openElement( 'tr');
 			$htmlOut .= Html::rawElement( 'td',
 				array(
-					'class' => 'article_protection_header',
+					'class' => 'article_protection_row article_protection_row_long',
 				),
-				'Usernames with edit permissions'
+				$owner_permissions_usernames
 			);
 
-			$htmlOut .= Html::openElement( 'td',
+			$htmlOut .= Html::rawElement( 'td',
 				array(
-					'class' => 'article_protection_value',
-				)
-			);
-			$htmlOut .= Html::element( 'textarea',
-				array(
-					'name' => 'edit_permissions',
-					'id' => "article_protection_edit",
-					'cols' => '5',
-					'rows' => '5',
+					'class' => 'article_protection_row article_protection_row_long',
 				),
 				$edit_permissions_usernames
 			);
-			$htmlOut .= Html::closeElement( 'td');
-			$htmlOut .= Html::closeElement( 'tr');
 
-			$htmlOut .= Html::openElement( 'tr');
 			$htmlOut .= Html::rawElement( 'td',
 				array(
-					'class' => 'article_protection_header',
+					'class' => 'article_protection_row',
 				),
-				'Usernames with view permissions'
+				Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) )
 			);
-
-			$htmlOut .= Html::openElement( 'td',
-				array(
-					'class' => 'article_protection_value',
-				)
-			);
-			$htmlOut .= Html::element( 'textarea',
-				array(
-					'name' => 'view_permissions',
-					'id' => "article_protection_view",
-					'cols' => '5',
-					'rows' => '5',
-				),
-				$view_permissions_usernames
-			);
-			$htmlOut .= Html::closeElement( 'td');
-			$htmlOut .= Html::closeElement( 'tr');
-
-			$htmlOut .= Html::element( 'input',
-				array(
-					'type' => 'hidden',
-					'id' => "article_protection_id",
-					'name' => "article_id",
-					'value' => $article->article_id,
-				)
-			);
-
-			$htmlOut .= Html::element( 'input',
-				array(
-					'type' => 'hidden',
-					'name' => "action",
-					'value' => "article_protection",
-				)
-			);
-
-			$htmlOut .= Html::openElement( 'tr');
-			$htmlOut .= Html::openElement( 'td',
-				array(
-					'colspan' => '2',
-				)
-			);
-			$htmlOut .= Html::element( 'input',
-				array(
-					'type' => 'submit',
-					'id' => 'article_protection_save',
-					'value' => "Save",
-				)
-			);
-			$htmlOut .= Html::closeElement( 'td');
-			$htmlOut .= Html::closeElement( 'tr');
-
-			$htmlOut .= Xml::closeElement( 'tbody' );
-			$htmlOut .= Xml::closeElement( 'table' );
-
-
-			$htmlOut .= Xml::closeElement( 'form' );
+			$htmlOut .= Html::closeElement( 'tr' );
 
 			$wgOut->addHTML($htmlOut);
 		}
+		$htmlOut = Xml::closeElement( 'tbody' );
+		$htmlOut .= Xml::closeElement( 'table' );
+
+		$wgOut->addHTML($htmlOut);
 		$wgOut->addModules( 'ext.articleprotection.edit' );
 	}
 
@@ -261,63 +222,139 @@ class SpecialArticleProtection extends SpecialPage {
 			)
 		);
 
-		foreach ( $articles as $article ) {
+		$articleNamesList = array();
+		foreach($articles as $article) {
+			$title = Title::newFromID( $article->article_id );
+			$title_name = $title->getFullText();
+			$articleNamesList[] = $title_name;
+		}
 
-			$article_user_permissions = $dbr->select(
-				'article_protection',
-				array(
-					'article_id',
-					'user_name',
-					'edit_permission',
-					'view_permission'
-				),
-				array(
-					'article_id' => $article->article_id,
-					'owner' => 0
-				)
-			);
+		$wgOut->addHTML("<br/><p> Articles owned by " . $username . " are " . implode(",", $articleNamesList) . "</p>");
+	}
 
-			$article_editors = array();
-			$article_viewers = array();
+	public function showArticlePermissions($pageName) {
+		global $wgUser, $wgOut;
+		$username = $wgUser->getName();
+		$article_id = Title::newFromText( $pageName )->getArticleID();
 
-			$title_name = Title::newFromID( $article->article_id )->getFullText();
-			foreach( $article_user_permissions as $article_user_perm ) {
-				if ( $article_user_perm->edit_permission == 1 ) {
-					$article_editors[] = $article_user_perm->user_name;
-					continue;
-				}
-				if ( $article_user_perm->view_permission == 1 ) {
-					$article_viewers[] = $article_user_perm->user_name;
-				}
+		$dbr = wfGetDB( DB_SLAVE );
+
+		$article_user_permissions = $dbr->select(
+			'article_protection',
+			array(
+				'article_id',
+				'user_name',
+				'owner',
+				'edit_permission'
+			),
+			array(
+				'article_id' => $article_id
+			)
+		);
+
+		$isMyPage = false;
+		$article_owners = array();
+		$article_editors = array();
+
+		foreach( $article_user_permissions as $article_user_perm ) {
+			if ( $article_user_perm->owner == 1 ) {
+				$article_owners[] = $article_user_perm->user_name;
+				if ( $article_user_perm->user_name == $username )
+					$isMyPage = true;
 			}
+			if ( $article_user_perm->edit_permission == 1 ) {
+				$article_editors[] = $article_user_perm->user_name;
+				continue;
+			}
+		}
+		$owner_permissions_usernames = implode(",", $article_owners);
+		$edit_permissions_usernames = implode(",", $article_editors);
 
-			$edit_permissions_usernames = implode(",", $article_editors);
+		if (!$isMyPage) {
+			if (empty($owner_permissions_usernames))
+				$owner_permissions_usernames = "None";
 			if (empty($edit_permissions_usernames))
 				$edit_permissions_usernames = "None";
-			$view_permissions_usernames = implode(",", $article_viewers);
-			if (empty($view_permissions_usernames))
-				$view_permissions_usernames = "None";
 
-		$output = <<<END
+			$output = <<<END
 
 <table class="wikitable article_protection_table">
-  <tr>
-    <th colspan=2>Article $title_name created by $username</th>
-  </tr>
-  <tr>
-    <td class="article_protection_header">Usernames with edit permissions</td>
-    <td class="article_protection_value">$edit_permissions_usernames</td>
-  </tr>
-  <tr>
-    <td class="article_protection_header">Usernames with view permissions</td>
-    <td class="article_protection_value">$view_permissions_usernames</td>
-  </tr>
+<tr>
+<th colspan=2>Article Protection information about $pageName</th>
+</tr>
+<tr>
+<td class="article_protection_header">Usernames of owners</td>
+<td class="article_protection_value">$owner_permissions_usernames</td>
+</tr>
+<tr>
+<td class="article_protection_header">Usernames with edit permissions</td>
+<td class="article_protection_value">$edit_permissions_usernames</td>
+</tr>
 </table>
 END;
 
 			$wgOut->addHTML($output);
-		}
+			$wgOut->addModules( 'ext.articleprotection.view' );
+		} else {
+			$wgOut->addHTML("<p> Enter usernames (separated by commas) to grant edit permissions for article <b>". $pageName ."</b> and click on save.</p>");
+			$htmlOut = Html::openElement( 'form',
+				array(
+					'name' => 'article_protection',
+					'class' => 'article_protection_form',
+					'id' => 'article_protection_form' . $article_id,
+				)
+			);
 
-		$wgOut->addModules( 'ext.articleprotection.view' );
+			$htmlOut .= Html::openElement( 'table',
+				array(
+					'class' => 'wikitable',
+				)
+			);
+			$htmlOut .= Html::openElement( 'tbody' );
+			$htmlOut .= Html::openElement( 'tr' );
+			$htmlOut .= Html::openElement( 'td'
+			);
+			$htmlOut .= Html::element( 'textarea',
+				array(
+					'name' => 'edit_permissions',
+					'id' => "article_protection_edit",
+					'cols' => '50',
+					'rows' => '5',
+				),
+				$edit_permissions_usernames
+			);
+			$htmlOut .= Html::closeElement( 'td' );
+			$htmlOut .= Html::closeElement( 'tr' );
+			$htmlOut .= Xml::closeElement( 'tbody' );
+			$htmlOut .= Xml::closeElement( 'table' );
+
+			$htmlOut .= Html::element( 'input',
+				array(
+					'type' => 'hidden',
+					'id' => "article_protection_id",
+					'name' => "article_id",
+					'value' => $article_id,
+				)
+			);
+			$htmlOut .= Html::element( 'input',
+				array(
+					'type' => 'hidden',
+					'name' => "action",
+					'value' => "article_protection",
+				)
+			);
+			$htmlOut .= Html::element( 'input',
+				array(
+					'type' => 'submit',
+					'id' => 'article_protection_save',
+					'value' => "Save",
+				)
+			);
+
+
+			$htmlOut .= Xml::closeElement( 'form' );
+			$wgOut->addHTML($htmlOut);
+			$wgOut->addModules( 'ext.articleprotection.edit' );
+		}
 	}
 }

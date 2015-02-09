@@ -10,9 +10,16 @@
 	overflow:hidden;
 	word-break:normal;
 }
+.article_protection_row {
+	width: 20%;
+	height:60px;
+}
 .article_protection_header {
 	width: 25%;
 	font-weight: 700;
+}
+.article_protection_row_long{
+	overflow-y: scroll;
 }
 .article_protection_value {
 	width: 75%;
