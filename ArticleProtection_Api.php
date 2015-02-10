@@ -7,50 +7,72 @@ class ApiArticleProtection extends ApiBase {
 
         $article_id = $this->getMain()->getVal('article_id');
         $edit_permissions = $this->getMain()->getVal('edit_permissions');
+		$new_article_editors = explode(",", $edit_permissions);
 
 		$dbw = wfGetDB( DB_MASTER );
 
-		$article_editors = explode(",", $edit_permissions);
+		$article_user_permissions = $dbw->select(
+			'article_protection',
+			array(
+				'article_id',
+				'user_name',
+				'edit_permission'
+			),
+			array(
+				'article_id' => $article_id
+			)
+		);
+		$old_article_editors = array();
+		foreach( $article_user_permissions as $article_user_perm ) {
+			if ( $article_user_perm->edit_permission == 1 ) {
+				$old_article_editors[] = $article_user_perm->user_name;
+				continue;
+			}
+		}
+		$editors_removed = array_diff( $old_article_editors, $new_article_editors );
+		$editors_added = array_diff( $new_article_editors, $old_article_editors );
 
-		$dbw->begin();
-		foreach($article_viewers as $viewer) {
-			$dbw->replace(
+		foreach($editors_removed as $editor) {
+			$dbw->delete(
 				'article_protection',
 				array(
-					array(
-						'article_id',
-						'user_name',
-					)
-				),
-				array(
 					'article_id' => $article_id,
-					'user_name' => trim($viewer),
-					'owner' => 0,
-					'edit_permission' => 0
+					'user_name' => $editor,
 				)
 			);
 		}
-		$dbw->commit();
-		$dbw->begin();
-		foreach($article_editors as $editor) {
-			$dbw->replace(
+		foreach($editors_added as $editor) {
+			$dbw->insert(
 				'article_protection',
 				array(
-					array(
-						'article_id',
-						'user_name',
-					)
-				),
-				array(
 					'article_id' => $article_id,
-					'user_name' => trim($editor),
+					'user_name' => $editor,
 					'owner' => 0,
 					'edit_permission' => 1,
 				)
 			);
 		}
-		$dbw->commit();
-    }
+
+		if (!empty($editors_added)) {
+			$logEntry = new ManualLogEntry( 'ArticleProtection', 'added-edit-permissions' );
+			$logEntry->setPerformer( $wgUser ); // User object, the user who performed this action
+			$logEntry->setTarget( Title::newFromID( $article_id ) ); // The page that this log entry affects, a Title object
+			$logEntry->setParameters( array(
+			  '4::newusers' => implode(",", $editors_added)
+			) );
+			$logid = $logEntry->insert();
+		}
+
+		if (!empty($editors_removed)) {
+			$logEntry = new ManualLogEntry( 'ArticleProtection', 'removed-edit-permissions' );
+			$logEntry->setPerformer( $wgUser ); // User object, the user who performed this action
+			$logEntry->setTarget( Title::newFromID( $article_id ) ); // The page that this log entry affects, a Title object
+			$logEntry->setParameters( array(
+			  '4::oldusers' => implode(",", $editors_removed)
+			) );
+			$logid = $logEntry->insert();
+		}
+}
 
     public function getDescription() {
          return 'Api to change article protection.';

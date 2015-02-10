@@ -1,7 +1,7 @@
 (function($) { $( document ).ready( function() {
 
 	function success() {
-		alert("Successfully saved!");
+		location.reload();
 	}
 	$( '.article_protection_form' ).submit(function(e){
 //		console.log( $( this ).serialize() );

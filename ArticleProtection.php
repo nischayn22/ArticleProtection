@@ -38,9 +38,16 @@ $wgHooks['TitleQuickPermissions'][] = 'ArticleProtectionHooks::onTitleQuickPermi
 $wgHooks['SkinTemplateNavigation'][] = 'ArticleProtectionHooks::onSkinTemplateNavigation';
 $wgHooks['UserGetRights'][] = 'ArticleProtectionHooks::onUserGetRights';
 
+// Register for log
+$wgLogTypes[] = 'ArticleProtection';
+$wgLogActionsHandlers['ArticleProtection/*'] = 'LogFormatter';
+
 // Special pages
 $wgAutoloadClasses['SpecialArticleProtection'] = dirname( __FILE__ ) . '/SpecialArticleProtection.php';
 $wgSpecialPages['ArticleProtection'] = 'SpecialArticleProtection';
+
+// i18n messages
+$wgExtensionMessagesFiles['ArticleProtection'] = __DIR__ . '/ArticleProtection.i18n.php';
 
 // To add or remove articles change the values in this array on your LocalSettings.php file.
 // The constant values can be found on https://www.mediawiki.org/wiki/Manual:Namespace_constants
