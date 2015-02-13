@@ -125,7 +125,6 @@ final class ArticleProtectionHooks {
 		);
 
 		if ( !$article_info ) {
-			$aRights[] = "edit";
 			return true;
 		}
 
