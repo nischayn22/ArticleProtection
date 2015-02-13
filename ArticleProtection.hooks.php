@@ -112,25 +112,32 @@ final class ArticleProtectionHooks {
 		$aRights = array_merge( array_diff($aRights, array("edit")) );
 		$dbr = wfGetDB( DB_SLAVE );
 
-		$article_info = $dbr->selectRow(
+		$article_infos = $dbr->select(
 			'article_protection',
 			array(
 				'owner',
+				'user_name',
 				'edit_permission'
 			),
 			array(
-				'user_name' => $user->getName(),
 				'article_id' => $wgTitle->getArticleID()
 			)
 		);
 
-		if ( !$article_info ) {
+		if ( !$article_infos->current() ) {
+			$aRights[] = "edit";
 			return true;
 		}
 
-		if ($article_info->owner == "1" || $article_info->edit_permission == "1" ) {
-			$aRights[] = "edit";
-			return true;
+		foreach($article_infos as $article_info) {
+			if ($article_info->user_name != $user->getName()) {
+				continue;
+			}
+
+			if ($article_info->owner == "1" || $article_info->edit_permission == "1" ) {
+				$aRights[] = "edit";
+				return true;
+			}
 		}
 
 		return true;
