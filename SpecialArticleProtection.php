@@ -108,6 +108,12 @@ class SpecialArticleProtection extends SpecialPage {
 			array(
 				'class' => 'article_protection_header',
 			),
+			"Original owner"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
 			"Owners"
 		);
 		$htmlOut .= Html::rawElement( 'td',
@@ -132,6 +138,7 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'article_id',
 					'user_name',
+					'original_owner',
 					'owner',
 					'edit_permission'
 				),
@@ -140,15 +147,18 @@ class SpecialArticleProtection extends SpecialPage {
 				)
 			);
 
+			$article_original_owners = array();
 			$article_owners = array();
 			$article_editors = array();
 
 			$title = Title::newFromID( $article->article_id );
 			$title_name = $title->getFullText();
 			foreach( $article_user_permissions as $article_user_perm ) {
+				if ( $article_user_perm->original_owner == 1 ) {
+					$article_original_owners[] = $article_user_perm->user_name;
+				}
 				if ( $article_user_perm->owner == 1 ) {
 					$article_owners[] = $article_user_perm->user_name;
-					continue;
 				}
 				if ( $article_user_perm->edit_permission == 1 ) {
 					$article_editors[] = $article_user_perm->user_name;
@@ -156,6 +166,7 @@ class SpecialArticleProtection extends SpecialPage {
 				}
 			}
 
+			$original_owner_permissions_usernames = implode(",", $article_original_owners);
 			$owner_permissions_usernames = implode(",", $article_owners);
 			$edit_permissions_usernames = implode(",", $article_editors);
 
@@ -165,6 +176,13 @@ class SpecialArticleProtection extends SpecialPage {
 					'class' => 'article_protection_row',
 				),
 				Linker::link($title)
+			);
+
+			$htmlOut .= Html::rawElement( 'td',
+				array(
+					'class' => 'article_protection_row article_protection_row_long',
+				),
+				$original_owner_permissions_usernames
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
@@ -237,6 +255,8 @@ class SpecialArticleProtection extends SpecialPage {
 		$username = $wgUser->getName();
 		$article_id = Title::newFromText( $pageName )->getArticleID();
 
+		$wgOut->addHTML( '<h3><a href="' . Title::newFromText( "Special:Log" )->getFullURL(array( "type" => "ArticleProtection", "page" => $pageName )) . '">see history of permissions.</a></h3>' );
+		$wgOut->addHTML( '<h3><a href="' . Title::newFromText( "Special:ArticleProtection" )->getFullURL() . '">see all pages you own.</a></h3>' );
 		$dbr = wfGetDB( DB_SLAVE );
 
 		$article_user_permissions = $dbr->select(

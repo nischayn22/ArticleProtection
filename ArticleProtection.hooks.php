@@ -56,7 +56,8 @@ final class ArticleProtectionHooks {
 				'article_id' => $article->getID(),
 				'user_name' => $user->getName(),
 				'owner' => 1,
-				'edit_permission' => 1,
+				'original_owner' => 1,
+				'edit_permission' => 0,
 			)
 		);
 		return true;

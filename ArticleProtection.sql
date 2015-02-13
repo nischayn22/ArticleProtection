@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS /*$wgDBprefix*/article_protection (
   article_id              INT(10) unsigned    NOT NULL, -- Foreign key: page.page_id
   user_name 			  varchar(255) binary NOT NULL default '',
   owner			          bool NOT NULL default 0,
+  original_owner          bool NOT NULL default 0,
   edit_permission         bool NOT NULL default 0,
   PRIMARY KEY  (article_id, user_name)
 ) /*$wgDBTableOptions*/;
