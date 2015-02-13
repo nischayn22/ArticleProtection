@@ -61,6 +61,8 @@ class ApiArticleProtection extends ApiBase {
 			  '4::newusers' => implode(",", $editors_added)
 			) );
 			$logid = $logEntry->insert();
+
+			$this->getResult()->addValue( "result", "added", implode(",", $editors_added));
 		}
 
 		if (!empty($editors_removed)) {
@@ -71,6 +73,7 @@ class ApiArticleProtection extends ApiBase {
 			  '4::oldusers' => implode(",", $editors_removed)
 			) );
 			$logid = $logEntry->insert();
+			$this->getResult()->addValue( 'result', "removed", implode(",", $editors_removed));
 		}
 }
 

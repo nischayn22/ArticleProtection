@@ -317,6 +317,7 @@ END;
 			$wgOut->addModules( 'ext.articleprotection.view' );
 		} else {
 			$wgOut->addHTML("<p> Enter usernames (separated by commas) to grant edit permissions for article <b>". $pageName ."</b> and click on save.</p>");
+			$wgOut->addHTML('<div class="result_message"> </div>');
 			$htmlOut = Html::openElement( 'form',
 				array(
 					'name' => 'article_protection',

@@ -32,3 +32,6 @@
 	overflow:hidden;
 	word-break:normal;
 }
+.result_message{
+	color:red;
+}
