@@ -23,4 +23,5 @@ $messages['en'] = array(
   // the template of the log entry message
   'logentry-ArticleProtection-added-edit-permissions' => '$1 added edit permissions for page $3 to following users $4',
   'logentry-ArticleProtection-removed-edit-permissions' => '$1 removed edit permissions for page $3 to following users $4',
+  'logentry-ArticleProtection-owner-created-permissions' => '$1 received ownership for creating the page $3',
  );

@@ -65,8 +65,8 @@ class SpecialArticleProtection extends SpecialPage {
 			return;
 		}
 
-		if (strpos( $subPage, 'User' ) !== false) {
-			$this->showUserPages( substr( $subPage, 5 ) );
+		if (strpos( $subPage, 'UserPermissions' ) !== false) {
+			$this->showUserPages( substr( $subPage, 16 ) );
 			return;
 		}
 		$this->showArticlePermissions($subPage);

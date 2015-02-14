@@ -44,7 +44,6 @@ final class ArticleProtectionHooks {
 	 */
 	public static function onArticleInsertComplete( &$article, User &$user, $text, $summary, $minoredit, $watchthis, $sectionanchor, &$flags, Revision 
 	$revision ) {
-
 		global $articleProtectionNS;
 		if (!in_array( $article->getTitle()->getNamespace(), $articleProtectionNS ))
 			return true;
@@ -60,14 +59,24 @@ final class ArticleProtectionHooks {
 				'edit_permission' => 0,
 			)
 		);
+
+		$logEntry = new ManualLogEntry( 'ArticleProtection', 'owner-created-permissions' );
+		$logEntry->setPerformer( $user ); // User object, the user who performed this action
+		$logEntry->setTarget( Title::newFromID( $article->getID() ) ); // The page that this log entry affects, a Title object
+		$logid = $logEntry->insert();
+
 		return true;
 	}
 
 	public static function onSkinTemplateNavigation( SkinTemplate &$sktemplate, array &$links ) {
-		global $wgTitle;
+		global $wgTitle, $articleProtectionNS;
+
+		if (!in_array( $wgTitle->getNamespace(), $articleProtectionNS ))
+			return true;
+
 		$request = $sktemplate->getRequest();
 		$action = $request->getText( 'action' );
-		$article_details = $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/' . $wgTitle->getText() )->getFullText() );
+		$article_details = $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/' . $wgTitle->getFullText() )->getFullText() );
 		$links['views']['protection'] = array(
 			'class' => false,
 			'text' => "Protection",
@@ -108,8 +117,18 @@ final class ArticleProtectionHooks {
 	}
 
 	public static function onUserGetRights( $user, &$aRights ) {
-		global $wgTitle;
-		$aRights = array_merge( array_diff($aRights, array("edit")) );
+		global $wgTitle, $articleProtectionNS;
+
+		if (!in_array( $wgTitle->getNamespace(), $articleProtectionNS )) {
+			return true;
+		}
+
+		$aRights = array_merge( array_diff($aRights, array("edit", "minoredit", "reupload", "upload")) );
+
+		if (!$user->isLoggedIn()) {
+			return true;
+		}
+
 		$dbr = wfGetDB( DB_SLAVE );
 
 		$article_infos = $dbr->select(
@@ -126,6 +145,9 @@ final class ArticleProtectionHooks {
 
 		if ( !$article_infos->current() ) {
 			$aRights[] = "edit";
+			$aRights[] = "minoredit";
+			$aRights[] = "upload";
+			$aRights[] = "reupload";
 			return true;
 		}
 
@@ -136,6 +158,9 @@ final class ArticleProtectionHooks {
 
 			if ($article_info->owner == "1" || $article_info->edit_permission == "1" ) {
 				$aRights[] = "edit";
+				$aRights[] = "minoredit";
+				$aRights[] = "upload";
+				$aRights[] = "reupload";
 				return true;
 			}
 		}
