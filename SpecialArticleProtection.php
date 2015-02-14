@@ -90,7 +90,8 @@ class SpecialArticleProtection extends SpecialPage {
 			)
 		);
 
-		$htmlOut = Html::openElement( 'table',
+		$htmlOut = Html::openElement( 'div' );
+		$htmlOut .= Html::openElement( 'table',
 			array(
 				'class' => 'wikitable',
 			)
@@ -128,6 +129,12 @@ class SpecialArticleProtection extends SpecialPage {
 			),
 			"Edit Permission link"
 		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"See Permissions history"
+		);
 		$htmlOut .= Html::closeElement( 'tr' );
 		$wgOut->addHTML($htmlOut);
 
@@ -155,13 +162,13 @@ class SpecialArticleProtection extends SpecialPage {
 			$title_name = $title->getFullText();
 			foreach( $article_user_permissions as $article_user_perm ) {
 				if ( $article_user_perm->original_owner == 1 ) {
-					$article_original_owners[] = $article_user_perm->user_name;
+					$article_original_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
 				}
 				if ( $article_user_perm->owner == 1 ) {
-					$article_owners[] = $article_user_perm->user_name;
+					$article_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
 				}
 				if ( $article_user_perm->edit_permission == 1 ) {
-					$article_editors[] = $article_user_perm->user_name;
+					$article_editors[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
 					continue;
 				}
 			}
@@ -175,7 +182,7 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row',
 				),
-				Linker::link($title)
+				Linker::link($title) . " (" . Linker::link($title, "edit", array(), array("action" => "edit")) . ")"
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
@@ -205,12 +212,20 @@ class SpecialArticleProtection extends SpecialPage {
 				),
 				Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) )
 			);
+
+			$htmlOut .= Html::rawElement( 'td',
+				array(
+					'class' => 'article_protection_row',
+				),
+				Linker::link( Title::newFromText( "Special:Log" ), "Log", array(), array( "type" => "ArticleProtection", "page" => $title_name ) )
+			);
 			$htmlOut .= Html::closeElement( 'tr' );
 
 			$wgOut->addHTML($htmlOut);
 		}
 		$htmlOut = Xml::closeElement( 'tbody' );
 		$htmlOut .= Xml::closeElement( 'table' );
+		$htmlOut .= Xml::closeElement( 'div' );
 
 		$wgOut->addHTML($htmlOut);
 		$wgOut->addModules( 'ext.articleprotection.edit' );
