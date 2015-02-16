@@ -16,6 +16,7 @@
 }
 .article_protection_header {
 	font-weight: 700;
+	text-align: center;
 }
 .article_protection_row_long{
 	max-width: 400px;

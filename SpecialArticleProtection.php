@@ -65,10 +65,17 @@ class SpecialArticleProtection extends SpecialPage {
 			return;
 		}
 
-		if (strpos( $subPage, 'UserPermissions' ) !== false) {
+		if (strpos( $subPage, 'UserPermissions:' ) !== false) {
+			$username = substr( $subPage, 16 );
+			if ($username == $wgUser->getName()) {
+				$this->showFormLinks();
+				return;
+			}
 			$this->showUserPages( substr( $subPage, 16 ) );
 			return;
 		}
+
+		$wgOut->setPageTitle('Protection for ' . str_replace( '_', ' ', $subPage));
 		$this->showArticlePermissions($subPage);
 	}
 
@@ -94,6 +101,7 @@ class SpecialArticleProtection extends SpecialPage {
 		$htmlOut .= Html::openElement( 'table',
 			array(
 				'class' => 'wikitable',
+				'style' => 'width:100%;',
 			)
 		);
 		$htmlOut .= Html::openElement( 'tbody' );
@@ -228,6 +236,162 @@ class SpecialArticleProtection extends SpecialPage {
 		$htmlOut .= Xml::closeElement( 'div' );
 
 		$wgOut->addHTML($htmlOut);
+
+
+		
+		// Table for articles user has only edit permissions to
+		$articles = $dbr->select(
+			'article_protection',
+			array(
+				'article_id',
+			),
+			array(
+				'user_name' => $wgUser->getName(),
+				'owner' => 0,
+				'edit_permission' => 1
+			)
+		);
+
+		$htmlOut = Html::openElement( 'div' );
+		$htmlOut .= Html::openElement( 'table',
+			array(
+				'class' => 'wikitable',
+				'style' => 'width:100%;',
+			)
+		);
+		$htmlOut .= Html::openElement( 'tbody' );
+
+		$htmlOut .= Html::openElement( 'tr' );
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"Article"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"Original owner"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"Owners"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"Users with edit permissions"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"See Permissions"
+		);
+		$htmlOut .= Html::rawElement( 'td',
+			array(
+				'class' => 'article_protection_header',
+			),
+			"See Permissions history"
+		);
+		$htmlOut .= Html::closeElement( 'tr' );
+		$wgOut->addHTML($htmlOut);
+
+		foreach ( $articles as $article ) {
+
+			$article_user_permissions = $dbr->select(
+				'article_protection',
+				array(
+					'article_id',
+					'user_name',
+					'original_owner',
+					'owner',
+					'edit_permission'
+				),
+				array(
+					'article_id' => $article->article_id
+				)
+			);
+
+			$article_original_owners = array();
+			$article_owners = array();
+			$article_editors = array();
+
+			$title = Title::newFromID( $article->article_id );
+			$title_name = $title->getFullText();
+			foreach( $article_user_permissions as $article_user_perm ) {
+				if ( $article_user_perm->original_owner == 1 ) {
+					$article_original_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+				}
+				if ( $article_user_perm->owner == 1 ) {
+					$article_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+				}
+				if ( $article_user_perm->edit_permission == 1 ) {
+					$article_editors[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+					continue;
+				}
+			}
+
+			$original_owner_permissions_usernames = implode(",", $article_original_owners);
+			$owner_permissions_usernames = implode(",", $article_owners);
+			$edit_permissions_usernames = implode(",", $article_editors);
+
+			$htmlOut = Html::openElement( 'tr' );
+			$htmlOut .= Html::rawElement( 'td',
+				array(
+					'class' => 'article_protection_row',
+				),
+				Linker::link($title) . " (" . Linker::link($title, "edit", array(), array("action" => "edit")) . ")"
+			);
+
+			$htmlOut .= Html::rawElement( 'td',
+				array(
+					'class' => 'article_protection_row article_protection_row_long',
+				),
+				$original_owner_permissions_usernames
+			);
+
+			$htmlOut .= Html::rawElement( 'td',
+				array(
+					'class' => 'article_protection_row article_protection_row_long',
+				),
+				$owner_permissions_usernames
+			);
+
+			$htmlOut .= Html::rawElement( 'td',
+				array(
+					'class' => 'article_protection_row article_protection_row_long',
+				),
+				$edit_permissions_usernames
+			);
+
+			$htmlOut .= Html::rawElement( 'td',
+				array(
+					'class' => 'article_protection_row',
+				),
+				Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) )
+			);
+
+			$htmlOut .= Html::rawElement( 'td',
+				array(
+					'class' => 'article_protection_row',
+				),
+				Linker::link( Title::newFromText( "Special:Log" ), "Log", array(), array( "type" => "ArticleProtection", "page" => $title_name ) )
+			);
+			$htmlOut .= Html::closeElement( 'tr' );
+
+			$wgOut->addHTML($htmlOut);
+		}
+		$htmlOut = Xml::closeElement( 'tbody' );
+		$htmlOut .= Xml::closeElement( 'table' );
+		$htmlOut .= Xml::closeElement( 'div' );
+
+		$wgOut->addHTML($htmlOut);
+
 		$wgOut->addModules( 'ext.articleprotection.edit' );
 	}
 
