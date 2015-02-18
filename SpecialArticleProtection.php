@@ -124,25 +124,13 @@ class SpecialArticleProtection extends SpecialPage {
 			array(
 				'class' => 'article_protection_header',
 			),
-			"Original owner"
+			"Owner(s)"
 		);
 		$htmlOut .= Html::rawElement( 'td',
 			array(
 				'class' => 'article_protection_header',
 			),
-			"Owners"
-		);
-		$htmlOut .= Html::rawElement( 'td',
-			array(
-				'class' => 'article_protection_header',
-			),
-			"Users with edit permissions"
-		);
-		$htmlOut .= Html::rawElement( 'td',
-			array(
-				'class' => 'article_protection_header',
-			),
-			"Edit Permission link"
+			"Editor(s)"
 		);
 		$htmlOut .= Html::rawElement( 'td',
 			array(
@@ -217,28 +205,20 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row article_protection_row_long',
 				),
-				$original_owner_permissions_usernames
+				$owner_permissions_usernames . " (Original owner:" . $original_owner_permissions_usernames . ")"
 			);
+
+			if( $this_user_is_owner ) {
+				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "modify" );
+			} else {
+				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" ) . " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $username), "ask permission" );
+			}
 
 			$htmlOut .= Html::rawElement( 'td',
 				array(
 					'class' => 'article_protection_row article_protection_row_long',
 				),
-				$owner_permissions_usernames
-			);
-
-			$htmlOut .= Html::rawElement( 'td',
-				array(
-					'class' => 'article_protection_row article_protection_row_long',
-				),
-				$edit_permissions_usernames
-			);
-
-			$htmlOut .= Html::rawElement( 'td',
-				array(
-					'class' => 'article_protection_row',
-				),
-				$this_user_is_owner ? Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) ) : Linker::link( Title::makeTitle( NS_USER_TALK, $username), "Ask to change edit permissions" )
+				$edit_permissions_usernames . " (" . $edit_perms_link . ")"
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
@@ -298,25 +278,13 @@ class SpecialArticleProtection extends SpecialPage {
 			array(
 				'class' => 'article_protection_header',
 			),
-			"Original owner"
+			"Owner(s)"
 		);
 		$htmlOut .= Html::rawElement( 'td',
 			array(
 				'class' => 'article_protection_header',
 			),
-			"Owners"
-		);
-		$htmlOut .= Html::rawElement( 'td',
-			array(
-				'class' => 'article_protection_header',
-			),
-			"Users with edit permissions"
-		);
-		$htmlOut .= Html::rawElement( 'td',
-			array(
-				'class' => 'article_protection_header',
-			),
-			"Edit Permissions link"
+			"Editor(s)"
 		);
 		$htmlOut .= Html::rawElement( 'td',
 			array(
@@ -392,28 +360,20 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row article_protection_row_long',
 				),
-				$original_owner_permissions_usernames
+				$owner_permissions_usernames . " (Original owner:" . $original_owner_permissions_usernames . ")"
 			);
 
-			$htmlOut .= Html::rawElement( 'td',
-				array(
-					'class' => 'article_protection_row article_protection_row_long',
-				),
-				$owner_permissions_usernames
-			);
-
-			$htmlOut .= Html::rawElement( 'td',
-				array(
-					'class' => 'article_protection_row article_protection_row_long',
-				),
-				$edit_permissions_usernames
-			);
+			if( $this_user_is_owner ) {
+				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "modify" );
+			} else {
+				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" ) . " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $username), "ask permission" );
+			}
 
 			$htmlOut .= Html::rawElement( 'td',
 				array(
 					'class' => 'article_protection_row',
 				),
-				$this_user_is_owner ? Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) ) : Linker::link( Title::makeTitle( NS_USER_TALK, $username), "Ask to change edit permissions" )
+				$edit_permissions_usernames . " (" . $edit_perms_link . ")"
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
