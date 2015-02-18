@@ -71,7 +71,7 @@ class SpecialArticleProtection extends SpecialPage {
 				$this->showFormLinks();
 				return;
 			}
-			$this->showUserPages( substr( $subPage, 16 ) );
+			$this->showFormLinks($username);
 			return;
 		}
 
@@ -79,12 +79,13 @@ class SpecialArticleProtection extends SpecialPage {
 		$this->showArticlePermissions($subPage);
 	}
 
-	public function showFormLinks() {
+	public function showFormLinks( $username = null ) {
 		global $wgOut, $wgUser, $wgScriptPath;
-
-//		$wgOut->addHTML( '<h3>Enter usernames seperated by commas.</h3>' );
-
 		$dbr = wfGetDB( DB_SLAVE );
+
+		if ( !$username ) {
+			$username = $wgUser->getName();
+		}
 
 		$articles = $dbr->select(
 			'article_protection',
@@ -92,10 +93,16 @@ class SpecialArticleProtection extends SpecialPage {
 				'article_id',
 			),
 			array(
-				'user_name' => $wgUser->getName(),
+				'user_name' => $username,
 				'owner' => 1
 			)
 		);
+
+		if ( $username == $wgUser->getName() ) {
+			$wgOut->addHTML( "<h3>My pages</h3>" );
+		} else {
+			$wgOut->addHTML( "<h3>Pages owned by $username</h3>" );
+		}
 
 		$htmlOut = Html::openElement( 'div' );
 		$htmlOut .= Html::openElement( 'table',
@@ -162,6 +169,9 @@ class SpecialArticleProtection extends SpecialPage {
 				)
 			);
 
+			$this_user_can_edit = false;
+			$this_user_is_owner = false;
+
 			$article_original_owners = array();
 			$article_owners = array();
 			$article_editors = array();
@@ -171,13 +181,23 @@ class SpecialArticleProtection extends SpecialPage {
 			foreach( $article_user_permissions as $article_user_perm ) {
 				if ( $article_user_perm->original_owner == 1 ) {
 					$article_original_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+					if ($article_user_perm->user_name == $wgUser->getName()) {
+						$this_user_can_edit = true;
+						$this_user_is_owner = true;
+					}
 				}
 				if ( $article_user_perm->owner == 1 ) {
 					$article_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+					if ($article_user_perm->user_name == $wgUser->getName()) {
+						$this_user_is_owner = true;
+						$this_user_can_edit = true;
+					}
 				}
 				if ( $article_user_perm->edit_permission == 1 ) {
 					$article_editors[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
-					continue;
+					if ($article_user_perm->user_name == $wgUser->getName()) {
+						$this_user_can_edit = true;
+					}
 				}
 			}
 
@@ -190,7 +210,7 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row',
 				),
-				Linker::link($title) . " (" . Linker::link($title, "edit", array(), array("action" => "edit")) . ")"
+				$this_user_can_edit ? Linker::link($title) . " (" . Linker::link($title, "edit", array(), array("action" => "edit")) . ")" : Linker::link($title)
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
@@ -218,7 +238,7 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row',
 				),
-				Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) )
+				$this_user_is_owner ? Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) ) : Linker::link( Title::makeTitle( NS_USER_TALK, $username), "Ask to change edit permissions" )
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
@@ -246,11 +266,17 @@ class SpecialArticleProtection extends SpecialPage {
 				'article_id',
 			),
 			array(
-				'user_name' => $wgUser->getName(),
+				'user_name' => $username,
 				'owner' => 0,
 				'edit_permission' => 1
 			)
 		);
+
+		if ( $username == $wgUser->getName() ) {
+			$wgOut->addHTML( '<h3>Pages that I can edit.</h3>' );
+		} else {
+			$wgOut->addHTML( "<h3>Pages that $username can edit.</h3>" );
+		}
 
 		$htmlOut = Html::openElement( 'div' );
 		$htmlOut .= Html::openElement( 'table',
@@ -290,7 +316,7 @@ class SpecialArticleProtection extends SpecialPage {
 			array(
 				'class' => 'article_protection_header',
 			),
-			"See Permissions"
+			"Edit Permissions link"
 		);
 		$htmlOut .= Html::rawElement( 'td',
 			array(
@@ -317,6 +343,9 @@ class SpecialArticleProtection extends SpecialPage {
 				)
 			);
 
+			$this_user_can_edit = false;
+			$this_user_is_owner = false;
+
 			$article_original_owners = array();
 			$article_owners = array();
 			$article_editors = array();
@@ -326,13 +355,24 @@ class SpecialArticleProtection extends SpecialPage {
 			foreach( $article_user_permissions as $article_user_perm ) {
 				if ( $article_user_perm->original_owner == 1 ) {
 					$article_original_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+					if ($article_user_perm->user_name == $wgUser->getName()) {
+						$this_user_can_edit = true;
+						$this_user_is_owner = true;
+					}
 				}
 				if ( $article_user_perm->owner == 1 ) {
 					$article_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+					if ($article_user_perm->user_name == $wgUser->getName()) {
+						$this_user_can_edit = true;
+						$this_user_is_owner = true;
+					}
 				}
+
 				if ( $article_user_perm->edit_permission == 1 ) {
 					$article_editors[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
-					continue;
+					if ($article_user_perm->user_name == $wgUser->getName()) {
+						$this_user_can_edit = true;
+					}
 				}
 			}
 
@@ -345,7 +385,7 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row',
 				),
-				Linker::link($title) . " (" . Linker::link($title, "edit", array(), array("action" => "edit")) . ")"
+				$this_user_can_edit ? Linker::link($title) . " (" . Linker::link($title, "edit", array(), array("action" => "edit")) . ")" : Linker::link($title)
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
@@ -373,7 +413,7 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row',
 				),
-				Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) )
+				$this_user_is_owner ? Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ) ) : Linker::link( Title::makeTitle( NS_USER_TALK, $username), "Ask to change edit permissions" )
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
@@ -393,40 +433,6 @@ class SpecialArticleProtection extends SpecialPage {
 		$wgOut->addHTML($htmlOut);
 
 		$wgOut->addModules( 'ext.articleprotection.edit' );
-	}
-
-	public function showUserPages($username) {
-		global $wgOut;
-
-		$user = User::newFromName( $username );
-		if (!$user || ($user->getId() == 0)) {
-			$wgOut->addHTML( '<p>This is not a valid username.</p>' );
-			return;
-		}
-
-		$wgOut->addHTML("<p> To make permission changes to articles created by you click <a href=" . Title::newFromText('Special:ArticleProtection')->getFullURL() . ">here</a>.</p>");
-		
-		$dbr = wfGetDB( DB_SLAVE );
-
-		$articles = $dbr->select(
-			'article_protection',
-			array(
-				'article_id',
-			),
-			array(
-				'user_name' => $user->getName(),
-				'owner' => 1
-			)
-		);
-
-		$articleNamesList = array();
-		foreach($articles as $article) {
-			$title = Title::newFromID( $article->article_id );
-			$title_name = $title->getFullText();
-			$articleNamesList[] = $title_name;
-		}
-
-		$wgOut->addHTML("<br/><p> Articles owned by " . $username . " are " . implode(",", $articleNamesList) . "</p>");
 	}
 
 	public function showArticlePermissions($pageName) {
@@ -451,6 +457,7 @@ class SpecialArticleProtection extends SpecialPage {
 			)
 		);
 
+		$pageName = str_replace( '_', ' ', $pageName);
 		$isMyPage = false;
 		$article_owners = array();
 		$article_editors = array();
