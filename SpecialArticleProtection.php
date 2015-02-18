@@ -160,6 +160,7 @@ class SpecialArticleProtection extends SpecialPage {
 			$this_user_can_edit = false;
 			$this_user_is_owner = false;
 
+			$original_owner_username = '';
 			$article_original_owners = array();
 			$article_owners = array();
 			$article_editors = array();
@@ -169,6 +170,7 @@ class SpecialArticleProtection extends SpecialPage {
 			foreach( $article_user_permissions as $article_user_perm ) {
 				if ( $article_user_perm->original_owner == 1 ) {
 					$article_original_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+					$original_owner_username = $article_user_perm->user_name;
 					if ($article_user_perm->user_name == $wgUser->getName()) {
 						$this_user_can_edit = true;
 						$this_user_is_owner = true;
@@ -211,7 +213,10 @@ class SpecialArticleProtection extends SpecialPage {
 			if( $this_user_is_owner ) {
 				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "modify" );
 			} else {
-				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" ) . " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $username), "ask permission" );
+				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" );
+				if (!$this_user_can_edit) {
+					$edit_perms_link .= " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $original_owner_username), "ask permission" );
+				}
 			}
 
 			$htmlOut .= Html::rawElement( 'td',
@@ -314,6 +319,7 @@ class SpecialArticleProtection extends SpecialPage {
 			$this_user_can_edit = false;
 			$this_user_is_owner = false;
 
+			$original_owner_username = '';
 			$article_original_owners = array();
 			$article_owners = array();
 			$article_editors = array();
@@ -323,6 +329,7 @@ class SpecialArticleProtection extends SpecialPage {
 			foreach( $article_user_permissions as $article_user_perm ) {
 				if ( $article_user_perm->original_owner == 1 ) {
 					$article_original_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+					$original_owner_username = $article_user_perm->user_name;
 					if ($article_user_perm->user_name == $wgUser->getName()) {
 						$this_user_can_edit = true;
 						$this_user_is_owner = true;
@@ -366,7 +373,10 @@ class SpecialArticleProtection extends SpecialPage {
 			if( $this_user_is_owner ) {
 				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "modify" );
 			} else {
-				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" ) . " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $username), "ask permission" );
+				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" );
+				if (!$this_user_can_edit) {
+					$edit_perms_link .= " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $original_owner_username), "ask permission" );
+				}
 			}
 
 			$htmlOut .= Html::rawElement( 'td',
