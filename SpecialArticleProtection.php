@@ -61,17 +61,12 @@ class SpecialArticleProtection extends SpecialPage {
 		}
 
 		if ( empty( $subPage ) ) {
-			$this->showFormLinks();
+			$this->showFormLinks($wgUser->getName());
 			return;
 		}
 
 		if (strpos( $subPage, 'UserPermissions:' ) !== false) {
-			$username = substr( $subPage, 16 );
-			if ($username == $wgUser->getName()) {
-				$this->showFormLinks();
-				return;
-			}
-			$this->showFormLinks($username);
+			$this->showFormLinks(substr( $subPage, 16 ));
 			return;
 		}
 
@@ -79,13 +74,9 @@ class SpecialArticleProtection extends SpecialPage {
 		$this->showArticlePermissions($subPage);
 	}
 
-	public function showFormLinks( $username = null ) {
-		global $wgOut, $wgUser, $wgScriptPath;
+	public function showFormLinks( $username ) {
+		global $wgOut, $wgUser;
 		$dbr = wfGetDB( DB_SLAVE );
-
-		if ( !$username ) {
-			$username = $wgUser->getName();
-		}
 
 		$articles = $dbr->select(
 			'article_protection',
@@ -214,7 +205,7 @@ class SpecialArticleProtection extends SpecialPage {
 				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "modify" );
 			} else {
 				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" );
-				if (!$this_user_can_edit) {
+				if (!$this_user_can_edit && $wgUser->isLoggedIn()) {
 					$edit_perms_link .= " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $original_owner_username), "ask permission" );
 				}
 			}
@@ -374,7 +365,7 @@ class SpecialArticleProtection extends SpecialPage {
 				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "modify" );
 			} else {
 				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" );
-				if (!$this_user_can_edit) {
+				if (!$this_user_can_edit && $wgUser->isLoggedIn()) {
 					$edit_perms_link .= " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $original_owner_username), "ask permission" );
 				}
 			}
@@ -411,7 +402,9 @@ class SpecialArticleProtection extends SpecialPage {
 		$article_id = Title::newFromText( $pageName )->getArticleID();
 
 		$wgOut->addHTML( '<h3><a href="' . Title::newFromText( "Special:Log" )->getFullURL(array( "type" => "ArticleProtection", "page" => $pageName )) . '">see history of permissions.</a></h3>' );
-		$wgOut->addHTML( '<h3><a href="' . Title::newFromText( "Special:ArticleProtection" )->getFullURL() . '">see all pages you own.</a></h3>' );
+		if( $wgUser->isLoggedIn() ) {
+			$wgOut->addHTML( '<h3><a href="' . Title::newFromText( "Special:ArticleProtection" )->getFullURL() . '">see all pages you own.</a></h3>' );
+		}
 		$dbr = wfGetDB( DB_SLAVE );
 
 		$article_user_permissions = $dbr->select(
