@@ -185,6 +185,9 @@ class SpecialArticleProtection extends SpecialPage {
 			$original_owner_permissions_usernames = implode(",", $article_original_owners);
 			$owner_permissions_usernames = implode(",", $article_owners);
 			$edit_permissions_usernames = implode(",", $article_editors);
+			if (empty($edit_permissions_usernames)) {
+				$edit_permissions_usernames = 'None';
+			}
 
 			$htmlOut = Html::openElement( 'tr' );
 			$htmlOut .= Html::rawElement( 'td',
@@ -202,7 +205,7 @@ class SpecialArticleProtection extends SpecialPage {
 			);
 
 			if( $this_user_is_owner ) {
-				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "modify" );
+				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" ) . " / " . Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $title_name ), "modify" );
 			} else {
 				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" );
 				if (!$this_user_can_edit && $wgUser->isLoggedIn()) {
@@ -345,6 +348,9 @@ class SpecialArticleProtection extends SpecialPage {
 			$original_owner_permissions_usernames = implode(",", $article_original_owners);
 			$owner_permissions_usernames = implode(",", $article_owners);
 			$edit_permissions_usernames = implode(",", $article_editors);
+			if (empty($edit_permissions_usernames)) {
+				$edit_permissions_usernames = 'None';
+			}
 
 			$htmlOut = Html::openElement( 'tr' );
 			$htmlOut .= Html::rawElement( 'td',
@@ -362,7 +368,7 @@ class SpecialArticleProtection extends SpecialPage {
 			);
 
 			if( $this_user_is_owner ) {
-				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "modify" );
+				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" ) . ' / ' . Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $title_name ), "modify" );
 			} else {
 				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" );
 				if (!$this_user_can_edit && $wgUser->isLoggedIn()) {
@@ -396,9 +402,17 @@ class SpecialArticleProtection extends SpecialPage {
 		$wgOut->addModules( 'ext.articleprotection.edit' );
 	}
 
-	public function showArticlePermissions($pageName) {
+	public function showArticlePermissions($subPage) {
 		global $wgUser, $wgOut;
+		$showEdit = false;
 		$username = $wgUser->getName();
+
+		$pageName = $subPage;
+		if (strpos( $subPage, 'Settings:' ) !== false) {
+			$pageName = substr($subPage, 9);
+			$showEdit = true;
+		}
+
 		$article_id = Title::newFromText( $pageName )->getArticleID();
 
 		$wgOut->addHTML( '<h3><a href="' . Title::newFromText( "Special:Log" )->getFullURL(array( "type" => "ArticleProtection", "page" => $pageName )) . '">see history of permissions.</a></h3>' );
@@ -438,12 +452,20 @@ class SpecialArticleProtection extends SpecialPage {
 		}
 		$owner_permissions_usernames = implode(",", $article_owners);
 		$edit_permissions_usernames = implode(",", $article_editors);
+		$log_link = Linker::link( Title::newFromText( "Special:Log" ), "Log", array(), array( "type" => "ArticleProtection", "page" => $pageName ) );
+		if ($showEdit && !$isMyPage) {
+			$this->displayRestrictionError();
+			return;
+		}
 
-		if (!$isMyPage) {
+		if (!$showEdit) {
 			if (empty($owner_permissions_usernames))
 				$owner_permissions_usernames = "None";
 			if (empty($edit_permissions_usernames))
 				$edit_permissions_usernames = "None";
+			if ($isMyPage){
+				$edit_permissions_usernames .= ' ' . Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $pageName ), "(modify)" );
+			}
 
 			$output = <<<END
 
@@ -452,12 +474,16 @@ class SpecialArticleProtection extends SpecialPage {
 <th colspan=2>Article Protection information about $pageName</th>
 </tr>
 <tr>
-<td class="article_protection_header">Usernames of owners</td>
+<td class="article_protection_header">Owner(s)</td>
 <td class="article_protection_value">$owner_permissions_usernames</td>
 </tr>
 <tr>
-<td class="article_protection_header">Usernames with edit permissions</td>
+<td class="article_protection_header">Editor(s)</td>
 <td class="article_protection_value">$edit_permissions_usernames</td>
+</tr>
+<tr>
+<td class="article_protection_header">See permissions history</td>
+<td class="article_protection_value">$log_link</td>
 </tr>
 </table>
 END;

@@ -91,7 +91,7 @@ final class ArticleProtectionHooks {
 
 		$request = $sktemplate->getRequest();
 		$action = $request->getText( 'action' );
-		$article_details = $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/' . $wgTitle->getFullText() )->getFullText() );
+		$article_details = $article_infos->current() ? $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/Settings:' . $wgTitle->getFullText() )->getFullText() ) : $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/' . $wgTitle->getFullText() )->getFullText() );
 		$links['views']['protection'] = array(
 			'class' => false,
 			'text' => $article_infos->current() ? "Modify editors" : "View editors",
