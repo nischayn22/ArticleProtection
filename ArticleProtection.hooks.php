@@ -69,32 +69,15 @@ final class ArticleProtectionHooks {
 	}
 
 	public static function onSkinTemplateNavigation( SkinTemplate &$sktemplate, array &$links ) {
-		global $wgTitle, $articleProtectionNS, $wgUser;
+		global $wgTitle, $articleProtectionNS;
 
 		if (!in_array( $wgTitle->getNamespace(), $articleProtectionNS ))
 			return true;
 
-		$dbr = wfGetDB( DB_SLAVE );
-
-		$article_infos = $dbr->select(
-			'article_protection',
-			array(
-				'owner',
-				'user_name',
-			),
-			array(
-				'article_id' => $wgTitle->getArticleID(),
-				'user_name' => $wgUser->getName(),
-				'owner' => 1
-			)
-		);
-
-		$request = $sktemplate->getRequest();
-		$action = $request->getText( 'action' );
-		$article_details = $article_infos->current() ? $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/Settings:' . $wgTitle->getFullText() )->getFullText() ) : $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/' . $wgTitle->getFullText() )->getFullText() );
+		$article_details = $sktemplate->makeArticleUrlDetails( Title::newFromText('Special:ArticleProtection/' . $wgTitle->getFullText() )->getFullText() );
 		$links['views']['protection'] = array(
 			'class' => false,
-			'text' => $article_infos->current() ? "Modify editors" : "View editors",
+			'text' => "View editors",
 			'href' => $article_details['href']
 		);
 		return true;
