@@ -37,6 +37,7 @@ $wgHooks['ArticleInsertComplete'][] = 'ArticleProtectionHooks::onArticleInsertCo
 $wgHooks['TitleQuickPermissions'][] = 'ArticleProtectionHooks::onTitleQuickPermissions';
 $wgHooks['SkinTemplateNavigation'][] = 'ArticleProtectionHooks::onSkinTemplateNavigation';
 $wgHooks['UserGetRights'][] = 'ArticleProtectionHooks::onUserGetRights';
+$wgHooks['BeforePageDisplay'][] = 'ArticleProtectionHooks::BeforePageDisplay';
 
 // Register for log
 $wgLogTypes[] = 'ArticleProtection';
@@ -66,4 +67,17 @@ $wgResourceModules['ext.articleprotection.view'] = array(
 	'localBasePath' => __DIR__,
 	'remoteExtPath' => 'ArticleProtection',
 	'position' => 'top' // available since r85616
+);
+
+$wgResourceModules['ext.articleprotection.pageview'] = array(
+	'scripts' => array( 'ArticleProtectionNavigation.js' ),
+	'localBasePath' => __DIR__,
+	'remoteExtPath' => 'ArticleProtection',
+	'position' => 'top', // available since r85616
+	'dependencies' => array(
+		'mediawiki.jqueryMsg',
+	),
+	'messages' => array(
+		'pages-link',
+	),
 );

@@ -69,7 +69,7 @@ final class ArticleProtectionHooks {
 	}
 
 	public static function onSkinTemplateNavigation( SkinTemplate &$sktemplate, array &$links ) {
-		global $wgTitle, $articleProtectionNS;
+		global $wgTitle, $articleProtectionNS, $wgOut;
 
 		if (!in_array( $wgTitle->getNamespace(), $articleProtectionNS ))
 			return true;
@@ -81,6 +81,10 @@ final class ArticleProtectionHooks {
 			'href' => $article_details['href']
 		);
 		return true;
+	}
+
+	public static function BeforePageDisplay( OutputPage &$out, Skin &$skin ) {
+		$out->addModules( 'ext.articleprotection.pageview' );
 	}
 
 	public static function onTitleQuickPermissions( $title, $user, $action, &$errors, $doExpensiveQueries, $short ) {

@@ -13,6 +13,8 @@ $magicWords['en'] = array(
  */
 
 $messages['en'] = array(
+  'pages-link' => 'Pages',
+
   // the Special:Log log name that appears in the drop-down on the Special:Log page
   'log-name-ArticleProtection' => 'ArticleProtection log',
  

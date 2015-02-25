@@ -16,4 +16,5 @@
 		e.preventDefault();
 		$.post(wgScriptPath + '/api.php', $( this ).serialize() + '&format=json', success);
 	});
+
 } ); })(jQuery);
