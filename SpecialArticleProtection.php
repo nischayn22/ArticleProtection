@@ -127,7 +127,7 @@ class SpecialArticleProtection extends SpecialPage {
 			array(
 				'class' => 'article_protection_header',
 			),
-			"See Permissions history"
+			"Permissions"
 		);
 		$htmlOut .= Html::closeElement( 'tr' );
 		$wgOut->addHTML($htmlOut);
@@ -201,30 +201,26 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row article_protection_row_long',
 				),
-				$owner_permissions_usernames . " (Original owner:" . $original_owner_permissions_usernames . ")"
+				$owner_permissions_usernames
 			);
 
+			$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "View" );
 			if( $this_user_is_owner ) {
-				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" ) . " / " . Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $title_name ), "modify" );
-			} else {
-				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" );
-				if (!$this_user_can_edit && $wgUser->isLoggedIn()) {
-					$edit_perms_link .= " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $original_owner_username), "ask permission" );
-				}
+				$edit_perms_link .= " / " . Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $title_name ), "Modify" );
 			}
 
 			$htmlOut .= Html::rawElement( 'td',
 				array(
 					'class' => 'article_protection_row article_protection_row_long',
 				),
-				$edit_permissions_usernames . " (" . $edit_perms_link . ")"
+				$edit_permissions_usernames
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
 				array(
 					'class' => 'article_protection_row',
 				),
-				Linker::link( Title::newFromText( "Special:Log" ), "Log", array(), array( "type" => "ArticleProtection", "page" => $title_name ) )
+				$edit_perms_link . " / " . Linker::link( Title::newFromText( "Special:Log" ), "Log", array(), array( "type" => "ArticleProtection", "page" => $title_name ) )
 			);
 			$htmlOut .= Html::closeElement( 'tr' );
 
@@ -289,7 +285,7 @@ class SpecialArticleProtection extends SpecialPage {
 			array(
 				'class' => 'article_protection_header',
 			),
-			"See Permissions history"
+			"Permissions"
 		);
 		$htmlOut .= Html::closeElement( 'tr' );
 		$wgOut->addHTML($htmlOut);
@@ -364,30 +360,26 @@ class SpecialArticleProtection extends SpecialPage {
 				array(
 					'class' => 'article_protection_row article_protection_row_long',
 				),
-				$owner_permissions_usernames . " (Original owner:" . $original_owner_permissions_usernames . ")"
+				$owner_permissions_usernames
 			);
 
+			$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "View" );
 			if( $this_user_is_owner ) {
-				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" ) . ' / ' . Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $title_name ), "modify" );
-			} else {
-				$edit_perms_link = Linker::link( Title::newFromText( "Special:ArticleProtection/" . $title_name ), "view" );
-				if (!$this_user_can_edit && $wgUser->isLoggedIn()) {
-					$edit_perms_link .= " / " . Linker::link( Title::makeTitle( NS_USER_TALK, $original_owner_username), "ask permission" );
-				}
+				$edit_perms_link .= " / " . Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $title_name ), "Modify" );
 			}
 
 			$htmlOut .= Html::rawElement( 'td',
 				array(
 					'class' => 'article_protection_row',
 				),
-				$edit_permissions_usernames . " (" . $edit_perms_link . ")"
+				$edit_permissions_usernames
 			);
 
 			$htmlOut .= Html::rawElement( 'td',
 				array(
 					'class' => 'article_protection_row',
 				),
-				Linker::link( Title::newFromText( "Special:Log" ), "Log", array(), array( "type" => "ArticleProtection", "page" => $title_name ) )
+				$edit_perms_link . ' / ' . Linker::link( Title::newFromText( "Special:Log" ), "Log", array(), array( "type" => "ArticleProtection", "page" => $title_name ) )
 			);
 			$htmlOut .= Html::closeElement( 'tr' );
 
@@ -413,12 +405,9 @@ class SpecialArticleProtection extends SpecialPage {
 			$showEdit = true;
 		}
 
-		$article_id = Title::newFromText( $pageName )->getArticleID();
+		$title = Title::newFromText( $pageName );
+		$article_id = $title->getArticleID();
 
-		$wgOut->addHTML( '<h3><a href="' . Title::newFromText( "Special:Log" )->getFullURL(array( "type" => "ArticleProtection", "page" => $pageName )) . '">see history of permissions.</a></h3>' );
-		if( $wgUser->isLoggedIn() ) {
-			$wgOut->addHTML( '<h3><a href="' . Title::newFromText( "Special:ArticleProtection" )->getFullURL() . '">see all pages you own.</a></h3>' );
-		}
 		$dbr = wfGetDB( DB_SLAVE );
 
 		$article_user_permissions = $dbr->select(
@@ -441,12 +430,12 @@ class SpecialArticleProtection extends SpecialPage {
 
 		foreach( $article_user_permissions as $article_user_perm ) {
 			if ( $article_user_perm->owner == 1 ) {
-				$article_owners[] = $article_user_perm->user_name;
+				$article_owners[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name ) . ' (' . Linker::link( Title::newFromText( "Special:ArticleProtection/UserPermissions:" . $article_user_perm->user_name ), "Pages" ) . ')';
 				if ( $article_user_perm->user_name == $username )
 					$isMyPage = true;
 			}
 			if ( $article_user_perm->edit_permission == 1 ) {
-				$article_editors[] = $article_user_perm->user_name;
+				$article_editers[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
 				continue;
 			}
 		}
@@ -464,14 +453,15 @@ class SpecialArticleProtection extends SpecialPage {
 			if (empty($edit_permissions_usernames))
 				$edit_permissions_usernames = "None";
 			if ($isMyPage){
-				$edit_permissions_usernames .= ' ' . Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $pageName ), "(modify)" );
+				$log_link = Linker::link( Title::newFromText( "Special:ArticleProtection/Settings:" . $pageName ), "Modify" ) . ' / ' . $log_link;
 			}
 
+			$pageLink = Linker::link($title);
 			$output = <<<END
 
 <table class="wikitable article_protection_table">
 <tr>
-<th colspan=2>Article Protection information about $pageName</th>
+<th colspan=2>Article Protection information about $pageLink</th>
 </tr>
 <tr>
 <td class="article_protection_header">Owner(s)</td>
@@ -482,7 +472,7 @@ class SpecialArticleProtection extends SpecialPage {
 <td class="article_protection_value">$edit_permissions_usernames</td>
 </tr>
 <tr>
-<td class="article_protection_header">See permissions history</td>
+<td class="article_protection_header">Permissions</td>
 <td class="article_protection_value">$log_link</td>
 </tr>
 </table>
