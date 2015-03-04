@@ -435,7 +435,7 @@ class SpecialArticleProtection extends SpecialPage {
 					$isMyPage = true;
 			}
 			if ( $article_user_perm->edit_permission == 1 ) {
-				$article_editers[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+				$article_editors[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
 				continue;
 			}
 		}
