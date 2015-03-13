@@ -182,9 +182,9 @@ class SpecialArticleProtection extends SpecialPage {
 				}
 			}
 
-			$original_owner_permissions_usernames = implode(",", $article_original_owners);
-			$owner_permissions_usernames = implode(",", $article_owners);
-			$edit_permissions_usernames = implode(",", $article_editors);
+			$original_owner_permissions_usernames = implode(", ", $article_original_owners);
+			$owner_permissions_usernames = implode(", ", $article_owners);
+			$edit_permissions_usernames = implode(", ", $article_editors);
 			if (empty($edit_permissions_usernames)) {
 				$edit_permissions_usernames = 'None';
 			}
@@ -341,9 +341,9 @@ class SpecialArticleProtection extends SpecialPage {
 				}
 			}
 
-			$original_owner_permissions_usernames = implode(",", $article_original_owners);
-			$owner_permissions_usernames = implode(",", $article_owners);
-			$edit_permissions_usernames = implode(",", $article_editors);
+			$original_owner_permissions_usernames = implode(", ", $article_original_owners);
+			$owner_permissions_usernames = implode(", ", $article_owners);
+			$edit_permissions_usernames = implode(", ", $article_editors);
 			if (empty($edit_permissions_usernames)) {
 				$edit_permissions_usernames = 'None';
 			}
@@ -435,19 +435,23 @@ class SpecialArticleProtection extends SpecialPage {
 					$isMyPage = true;
 			}
 			if ( $article_user_perm->edit_permission == 1 ) {
-				$article_editors[] = Linker::link( Title::makeTitle( NS_USER, $article_user_perm->user_name), $article_user_perm->user_name );
+				$article_editors[] = $article_user_perm->user_name;
 				continue;
 			}
 		}
-		$owner_permissions_usernames = implode(",", $article_owners);
-		$edit_permissions_usernames = implode(",", $article_editors);
+
 		$log_link = Linker::link( Title::newFromText( "Special:Log" ), "Log", array(), array( "type" => "ArticleProtection", "page" => $pageName ) );
-		if ($showEdit && !$isMyPage) {
+		if ($showEdit && !$isMyPage && !in_array("sysop", $wgUser->getEffectiveGroups())) {
 			$this->displayRestrictionError();
 			return;
 		}
 
 		if (!$showEdit) {
+			$owner_permissions_usernames = implode(", ", $article_owners);
+			foreach($article_editors as &$editor) {
+				$editor = Linker::link( Title::makeTitle( NS_USER, $editor), $editor );
+			}
+			$edit_permissions_usernames = implode(", ", $article_editors);
 			if (empty($owner_permissions_usernames))
 				$owner_permissions_usernames = "None";
 			if (empty($edit_permissions_usernames))
@@ -481,6 +485,7 @@ END;
 			$wgOut->addHTML($output);
 			$wgOut->addModules( 'ext.articleprotection.view' );
 		} else {
+			$edit_permissions_usernames = implode(",", $article_editors);
 			$wgOut->addHTML("<p> Enter usernames (separated by commas) to grant edit permissions for article <b>". $pageName ."</b> and click on save.</p>");
 			$wgOut->addHTML('<div class="result_message"> </div>');
 			$htmlOut = Html::openElement( 'form',

@@ -5,6 +5,7 @@ class ApiArticleProtection extends ApiBase {
     public function execute() {
         global $wgScript, $wgUser;
 
+		//TODO: Need to check access permissions here again, else it can be hacked
         $article_id = $this->getMain()->getVal('article_id');
         $edit_permissions = $this->getMain()->getVal('edit_permissions');
 		$new_article_editors = explode(",", $edit_permissions);
