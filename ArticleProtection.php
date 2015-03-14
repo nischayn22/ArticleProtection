@@ -54,6 +54,9 @@ $wgExtensionMessagesFiles['ArticleProtection'] = __DIR__ . '/ArticleProtection.i
 // The constant values can be found on https://www.mediawiki.org/wiki/Manual:Namespace_constants
 $articleProtectionNS = array( NS_MAIN, NS_USER, NS_PROJECT, NS_FILE, NS_TEMPLATE );
 
+// Maximum allowed editors for a page
+$apMaxEditors = 20;
+
 $wgResourceModules['ext.articleprotection.edit'] = array(
 	'styles' => array( 'ArticleProtection.css' ),
 	'scripts' => 'ArticleProtection.js',
