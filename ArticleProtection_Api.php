@@ -21,6 +21,10 @@ class ApiArticleProtection extends ApiBase {
 				$this->getResult()->addValue( 'result', "username_error", $editor);
 				return;
 			}
+			if ($user->getId() == $wgUser->getId()) {
+				$this->getResult()->addValue( 'result', "owner_error", $editor);
+				return;
+			}
 			$editor = $user->getName();
 		}
 
@@ -122,7 +126,7 @@ class ApiArticleProtection extends ApiBase {
             ),
             'edit_permissions' => array (
                 ApiBase::PARAM_TYPE => 'string',
-                ApiBase::PARAM_REQUIRED => true
+                ApiBase::PARAM_REQUIRED => false
             ),
         ));
     }
