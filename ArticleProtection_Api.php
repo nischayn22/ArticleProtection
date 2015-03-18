@@ -5,9 +5,12 @@ class ApiArticleProtection extends ApiBase {
     public function execute() {
         global $wgScript, $wgUser, $apMaxEditors;
 
+		$new_article_editors = array();
         $article_id = $this->getMain()->getVal('article_id');
         $edit_permissions = $this->getMain()->getVal('edit_permissions');
-		$new_article_editors = explode(",", $edit_permissions);
+		if (!empty($edit_permissions)) {
+			$new_article_editors = explode(",", $edit_permissions);
+		}
 
 		if (count($new_article_editors) > $apMaxEditors) {
 			$this->getResult()->addValue( 'result', "editor_limit_exceeded", $apMaxEditors);
@@ -15,7 +18,7 @@ class ApiArticleProtection extends ApiBase {
 		}
 
 		// Clean usernames
-		foreach($new_article_editors as &$editor) {
+		foreach($new_article_editors as $key => $editor) {
 			$user = User::newFromName($editor);
 			if ($user->getId() == 0) {
 				$this->getResult()->addValue( 'result', "username_error", $editor);
@@ -25,7 +28,7 @@ class ApiArticleProtection extends ApiBase {
 				$this->getResult()->addValue( 'result', "owner_error", $editor);
 				return;
 			}
-			$editor = $user->getName();
+			$new_article_editors[$key] = $user->getName();
 		}
 
 		$dbw = wfGetDB( DB_MASTER );
