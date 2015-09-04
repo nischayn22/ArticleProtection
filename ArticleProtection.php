@@ -38,6 +38,7 @@ $wgHooks['TitleQuickPermissions'][] = 'ArticleProtectionHooks::onTitleQuickPermi
 $wgHooks['SkinTemplateNavigation'][] = 'ArticleProtectionHooks::onSkinTemplateNavigation';
 $wgHooks['UserGetRights'][] = 'ArticleProtectionHooks::onUserGetRights';
 $wgHooks['BeforePageDisplay'][] = 'ArticleProtectionHooks::BeforePageDisplay';
+$wgHooks['APIEditBeforeSave'][] = 'ArticleProtectionHooks::onAPIEditBeforeSave';
 
 // Register for log
 $wgLogTypes[] = 'ArticleProtection';

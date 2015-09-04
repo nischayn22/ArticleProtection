@@ -169,4 +169,52 @@ final class ArticleProtectionHooks {
 
 		return true;
 	}
+	
+	public static function onAPIEditBeforeSave( $editPage, $text, &$resultArr ) {
+		global $wgTitle, $wgUser, $articleProtectionNS;
+
+		if ( !in_array( $wgTitle->getNamespace(), $articleProtectionNS ) ) {
+			return true;
+		}
+
+		if ( !$wgUser->isLoggedIn() ) {
+			$resultArr = array(
+				'reason' => 'Anonymous edits not permitted for page.'
+			);
+			return false;
+		}
+
+		$dbr = wfGetDB( DB_SLAVE );
+
+		$article_infos = $dbr->select(
+			'article_protection',
+			array(
+				'owner',
+				'user_name',
+				'edit_permission'
+			),
+			array(
+				'article_id' => $wgTitle->getArticleID()
+			)
+		);
+
+		if ( !$article_infos->current() ) {
+			return true;
+		}
+
+		foreach ( $article_infos as $article_info ) {
+			if ( $article_info->user_name != $wgUser->getName() ) {
+				continue;
+			}
+
+			if ( $article_info->owner == "1" || $article_info->edit_permission == "1" ) {
+				return true;
+			}
+		}
+
+		$resultArr = array(
+			'reason' => 'User does not have access to edit page.'
+		);
+		return false;
+	}
 }
